@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'distribution'
+    id "com.github.node-gradle.node" version "7.1.0"
+}
+
+
+version = "1.0.0"
+group = "com.joedobo27"
+
+java {
+    // Use Java 17 for compilation and tooling
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+// Ensure bytecode and API usage are restricted to Java 8
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+}
+
+def WUServerPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Wurm Unlimited Dedicated Server\\"
+
+repositories {
+    mavenCentral()
+    maven { url = "https://gotti.no-ip.org/maven/repository" }
+}
+
+dependencies {
+    compileOnly(files("${WUServerPath}common.jar"))
+    compileOnly(files("${WUServerPath}server.jar"))
+    compileOnly("org.gotti.wurmunlimited:server-modlauncher:0.47")
+    // implementation files("${WUServerPath}modlauncher.jar")
+    compileOnly(files("${WUServerPath}javassist.jar"))
+    compileOnly(files("${WUServerPath}mods\\jdbCommon\\jdbCommon.jar"))
+
+    // https://mvnrepository.com/artifact/com.intellij/annotations
+    compileOnly group: 'com.intellij', name: 'annotations', version: '12.0'
+}
+
+jar {
+    archiveBaseName.set(project.name)
+    archiveVersion.set("")
+    manifest {
+        attributes("Build-Jdk": JavaVersion.current())
+    }
+}
+
+
+def main= 'C:\\Users\\Jason\\IdeaProjects\\ServerOfflineTimeCompensateMod\\src\\main\\'
+
+task dist(type: Zip, dependsOn: 'jar') {
+    into('mods\\scriptrunner\\scripts', {
+        from( main + 'scriptrunner')
+    })
+    into("mods", {
+        into(project.name, {
+            from jar
+        })
+    })
+    into('mods', {
+        from( main + 'resources\\META-INF\\org.gotti.wurmunlimited.modloader', {
+            include("*.properties")
+        })
+    })
+    archiveFileName = "${project.name}-${project.version}.zip"
+}
